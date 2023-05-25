@@ -8,6 +8,8 @@ import com.branch.sikgu.auth.handler.MemberAuthenticationFailureHandler;
 import com.branch.sikgu.auth.handler.MemberAuthenticationSuccessHandler;
 import com.branch.sikgu.auth.jwt.JwtTokenizer;
 import com.branch.sikgu.auth.utils.CustomAuthorityUtils;
+import com.branch.sikgu.member.service.MemberService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -31,12 +33,21 @@ import static org.springframework.security.config.Customizer.withDefaults;
 public class SecurityConfiguration {
     private final JwtTokenizer jwtTokenizer;
     private final CustomAuthorityUtils authorityUtils;
+    private final MemberService memberService;
 
     public SecurityConfiguration(JwtTokenizer jwtTokenizer,
-                                   CustomAuthorityUtils authorityUtils) {
+                                 CustomAuthorityUtils authorityUtils,
+                                 MemberService memberService) {
         this.jwtTokenizer = jwtTokenizer;
         this.authorityUtils = authorityUtils;
+        this.memberService = memberService;
     }
+
+    @Value("${spring.security.oauth2.client.registration.naver.client-id}")
+    private String naverClientId;
+
+    @Value("${spring.security.oauth2.client.registration.naver.client-secret}")
+    private String naverClientSecret;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -58,6 +69,16 @@ public class SecurityConfiguration {
                     httpServletResponse.setHeader("Authorization", "");
                 })
                 .deleteCookies("JSESSIONID")
+                .and()
+
+                .authorizeRequests()
+                .antMatchers("/", "/css/**", "/images/**", "/js/**", "/profile").permitAll()
+                .antMatchers("/api/**").hasRole(Role.USER.name())
+                .anyRequest().authenticated().and()
+                .logout().logoutSuccessUrl("/").and()
+                .oauth2Login()
+                .userInfoEndpoint()
+                .userService(memberService)
                 .and()
 
                 .exceptionHandling()

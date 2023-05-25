@@ -3,6 +3,7 @@
     import com.branch.sikgu.meal.board.entity.Board;
     import com.branch.sikgu.myPage.entity.MyPage;
     import lombok.Getter;
+    import lombok.RequiredArgsConstructor;
     import lombok.Setter;
 
     import javax.persistence.*;
@@ -39,6 +40,9 @@
         private LocalDateTime createdAt = LocalDateTime.now();
         @Column(name = "updated_at")
         private LocalDateTime updatedAt;
+        @Enumerated(EnumType.STRING)
+        @Column(nullable = false)
+        private Role authrole;
 
         @OneToOne(mappedBy = "member", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
         @JoinColumn(name = "MEMBER_PROFILE_ID")
@@ -70,4 +74,14 @@
         @ElementCollection(fetch = FetchType.EAGER)
         private List<String> role = new ArrayList<>();
 
+        @Getter
+        @RequiredArgsConstructor
+        public enum Role {
+
+            GUEST("ROLE_GUEST", "손님"),
+            USER("ROLE_USER", "사용자");
+
+            private final String key;
+            private final String value;
+        }
     }
